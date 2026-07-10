@@ -51,6 +51,8 @@ public class UploadFileRequest extends PutObjectBasicRequest {
 
     private boolean needStreamCalculateCRC64 = false;
 
+    private ResumableTransferHandle transferHandle;
+
     /**
      * Constructor
      * 
@@ -472,6 +474,26 @@ public class UploadFileRequest extends PutObjectBasicRequest {
     public void setNeedStreamCalculateCRC64(boolean needStreamCalculateCRC64) {
         this.needStreamCalculateCRC64 = needStreamCalculateCRC64;
     }
+
+    /**
+     * 获取断点续传暂停/取消句柄。
+     *
+     * @return 断点续传句柄
+     */
+    public ResumableTransferHandle getTransferHandle() {
+        return transferHandle;
+    }
+
+    /**
+     * 设置断点续传暂停/取消句柄。
+     *
+     * @param transferHandle
+     *            断点续传句柄
+     */
+    public void setTransferHandle(ResumableTransferHandle transferHandle) {
+        this.transferHandle = transferHandle;
+    }
+
     @Override
     public String toString() {
         return "UploadFileRequest [bucketName=" + bucketName + ", objectKey=" + objectKey + ", partSize=" + partSize
