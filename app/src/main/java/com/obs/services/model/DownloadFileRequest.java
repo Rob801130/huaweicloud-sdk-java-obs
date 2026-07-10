@@ -53,6 +53,10 @@ public class DownloadFileRequest extends BaseObjectRequest {
 
     private boolean needCalculateCRC64 = false;
 
+    private ResumableTransferHandle transferHandle;
+
+    private boolean enableFileDeduplication = false;
+
     /**
      * Constructor
      * 
@@ -85,7 +89,7 @@ public class DownloadFileRequest extends BaseObjectRequest {
 
     /**
      * Constructor
-     * 
+     *
      * @param bucketName
      *            Bucket name
      * @param objectKey
@@ -100,6 +104,26 @@ public class DownloadFileRequest extends BaseObjectRequest {
         this.objectKey = objectKey;
         this.downloadFile = downloadFile;
         this.partSize = partSize;
+    }
+
+    /**
+     * Constructor with deduplication option.
+     *
+     * @param bucketName
+     *            Bucket name
+     * @param objectKey
+     *            Object name
+     * @param downloadFile
+     *            Path to the to-be-downloaded file
+     * @param enableFileDeduplication
+     *            Whether to enable file-level deduplication
+     */
+    public DownloadFileRequest(String bucketName, String objectKey, String downloadFile,
+            boolean enableFileDeduplication) {
+        this.bucketName = bucketName;
+        this.objectKey = objectKey;
+        this.downloadFile = downloadFile;
+        this.enableFileDeduplication = enableFileDeduplication;
     }
 
     /**
@@ -538,6 +562,51 @@ public class DownloadFileRequest extends BaseObjectRequest {
         this.needCalculateCRC64 = needCalculateCRC64;
     }
 
+    /**
+     * 获取断点续传暂停/取消句柄。
+     *
+     * @return 断点续传句柄
+     */
+    public ResumableTransferHandle getTransferHandle() {
+        return transferHandle;
+    }
+
+    /**
+     * 设置断点续传暂停/取消句柄。
+     *
+     * @param transferHandle
+     *            断点续传句柄
+     */
+    public void setTransferHandle(ResumableTransferHandle transferHandle) {
+        this.transferHandle = transferHandle;
+    }
+
+    /**
+     * 判断是否启用文件去重。
+     * <p>
+     * 当启用时，SDK将拒绝同时下载同一个对象为同一个本地文件，
+     * 防止多线程并发下载导致本地文件内容不一致。
+     * </p>
+     *
+     * @return true 表示启用文件去重
+     */
+    public boolean isEnableFileDeduplication() {
+        return enableFileDeduplication;
+    }
+
+    /**
+     * 设置是否启用文件去重。
+     * <p>
+     * 当设置为 true 时，如果同时有多个下载任务尝试下载到同一个本地文件，
+     * 后续的任务将抛出异常而不是等待或允许覆盖。
+     * </p>
+     *
+     * @param enableFileDeduplication
+     *            是否启用文件去重
+     */
+    public void setEnableFileDeduplication(boolean enableFileDeduplication) {
+        this.enableFileDeduplication = enableFileDeduplication;
+    }
 
     @Override
     public String toString() {

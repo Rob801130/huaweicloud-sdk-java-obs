@@ -44,6 +44,10 @@
 			<outputDirectory>/</outputDirectory>
 		</file>
 		<file>
+			<source>${project.basedir}/pom-codecpp.xml</source>
+			<outputDirectory>/</outputDirectory>
+		</file>
+		<file>
 			<source>${project.basedir}/poms/pom-android.xml</source>
 			<outputDirectory>/</outputDirectory>
 		</file>

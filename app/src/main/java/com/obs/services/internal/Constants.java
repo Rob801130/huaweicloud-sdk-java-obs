@@ -3,9 +3,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use
  * this file except in compliance with the License.  You may obtain a copy of the
  * License at
- * 
+ * <p>
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ * <p>
  * Unless required by applicable law or agreed to in writing, software distributed
  * under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
  * CONDITIONS OF ANY KIND, either express or implied.  See the License for the
@@ -162,6 +162,9 @@ public class Constants {
         public static final String BUCKET = "Bucket";
         public static final String AGENCY = "Agency";
         public static final String PREFIX = "Prefix";
+        public static final String ACCESS_CONTROL_TRANSLATION = "AccessControlTranslation";
+        public static final String OWNER = "Owner";
+        public static final String ACCOUNT = "Account";
 
     }
 
@@ -242,7 +245,7 @@ public class Constants {
 
     public static final TimeZone GMT_TIMEZONE = TimeZone.getTimeZone("GMT");
 
-    public static final String OBS_SDK_VERSION = "3.26.3.1";
+    public static final String OBS_SDK_VERSION = "3.26.6";
 
     public static final String USER_AGENT_VALUE = "obs-sdk-java/" + Constants.OBS_SDK_VERSION;
 
@@ -347,6 +350,6 @@ public class Constants {
                     "x-image-save-bucket", "x-image-save-object", "x-image-process", "x-obs-sse-kms-key-project-id",
                     "x-oss-process", "ignore-sign-in-query", "listcontentsummary", "multilistcontentsummary",
                     "x-obs-trash", "getcontentsummary", "select", "select-type", "symlink", "x-obs-qosinfo",
-                    "x-obs-snapshot", "x-obs-snapshotroot"));
+                    "x-obs-snapshot", "x-obs-snapshotroot", "object-lock", "retention", "obscompresspolicy", "dispolicy"));
 
 }

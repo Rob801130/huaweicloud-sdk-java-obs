@@ -1,3 +1,14 @@
+Version 3.26.6
+New features:
+1. 支持桶在线解压策略特性
+2. 支持桶DIS策略特性
+3. 支持镜像回源特性
+4. 支持WORM特性
+5. 支持使用OIDC Token初始化ObsClient
+Third-party dependence:
+1. 升级 log4j-core 到 2.25.4
+2. 升级 log4j-api 到 2.25.4 
+-----------------------------------------------------------------------------------
 Version 3.26.3.1
 Resolved issues:
 1. 修复客户端加密功能没有一致性校验的问题

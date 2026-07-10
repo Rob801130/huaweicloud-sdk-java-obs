@@ -2,8 +2,11 @@ package com.obs.services;
 
 import com.obs.log.ILogger;
 import com.obs.log.LoggerBuilder;
+import com.obs.services.internal.task.DownloadFileTask;
 import com.obs.services.internal.task.UploadFileTask;
 import com.obs.services.model.CompleteMultipartUploadResult;
+import com.obs.services.model.DownloadFileRequest;
+import com.obs.services.model.DownloadFileResult;
 import com.obs.services.model.TaskCallback;
 import com.obs.services.model.UploadFileRequest;
 
@@ -137,9 +140,11 @@ public class ObsClientAsync extends ObsClient implements IObsClientAsync {
     }
 
     /**
-     * @param uploadFileRequest
-     * @param completeCallback
-     * @return
+     * uploadFileAsync
+     *
+     * @param uploadFileRequest file upload request
+     * @param completeCallback file upload request complete callback
+     * @return file upload task
      */
     @Override
     public UploadFileTask uploadFileAsync(
@@ -155,5 +160,28 @@ public class ObsClientAsync extends ObsClient implements IObsClientAsync {
 
         uploadFileTask.setResultFuture(future);
         return uploadFileTask;
+    }
+
+    /**
+     * downloadFileAsync
+     *
+     * @param downloadFileRequest  file download request
+     * @param completeCallback  file download request complete callback
+     * @return file download task
+     */
+    @Override
+    public DownloadFileTask downloadFileAsync(
+            DownloadFileRequest downloadFileRequest,
+            TaskCallback<DownloadFileResult, DownloadFileRequest> completeCallback) {
+        log.debug("start downloadFileAsync");
+        if (downloadFileRequest.getCancelHandler() != null) {
+            downloadFileRequest.getCancelHandler().resetCancelStatus();
+        }
+        DownloadFileTask downloadFileTask =
+                new DownloadFileTask(this, downloadFileRequest.getBucketName(), downloadFileRequest, completeCallback);
+        Future<?> future = getExecutorService().submit((Callable<?>) downloadFileTask);
+
+        downloadFileTask.setResultFuture(future);
+        return downloadFileTask;
     }
 }

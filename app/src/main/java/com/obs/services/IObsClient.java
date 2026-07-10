@@ -56,6 +56,8 @@ import com.obs.services.model.BucketLocationResponse;
 import com.obs.services.model.BucketLoggingConfiguration;
 import com.obs.services.model.BucketMetadataInfoRequest;
 import com.obs.services.model.BucketMetadataInfoResult;
+import com.obs.services.model.OptionsInfoRequest;
+import com.obs.services.model.OptionsInfoResult;
 import com.obs.services.model.BucketNotificationConfiguration;
 import com.obs.services.model.BucketPolicyResponse;
 import com.obs.services.model.BucketQuota;
@@ -166,6 +168,22 @@ import com.obs.services.model.trash.DeleteBucketTrashRequest;
 import com.obs.services.model.trash.GetBucketTrashRequest;
 import com.obs.services.model.trash.GetBucketTrashResult;
 import com.obs.services.model.trash.SetBucketTrashRequest;
+import com.obs.services.model.compress.SetBucketCompressPolicyRequest;
+import com.obs.services.model.compress.GetBucketCompressPolicyRequest;
+import com.obs.services.model.compress.GetBucketCompressPolicyResult;
+import com.obs.services.model.compress.DeleteBucketCompressPolicyRequest;
+import com.obs.services.model.dis.DeleteBucketDisPolicyRequest;
+import com.obs.services.model.dis.GetBucketDisPolicyRequest;
+import com.obs.services.model.dis.GetBucketDisPolicyResult;
+import com.obs.services.model.dis.SetBucketDisPolicyRequest;
+import com.obs.services.model.mirrorback.DeleteBucketMirrorBackToSourceRequest;
+import com.obs.services.model.mirrorback.GetBucketMirrorBackToSourceRequest;
+import com.obs.services.model.mirrorback.GetBucketMirrorBackToSourceResult;
+import com.obs.services.model.mirrorback.SetBucketMirrorBackToSourceRequest;
+import com.obs.services.model.objectlock.GetObjectLockConfigurationRequest;
+import com.obs.services.model.objectlock.GetObjectLockConfigurationResult;
+import com.obs.services.model.objectlock.SetObjectLockConfigurationRequest;
+import com.obs.services.model.objectlock.SetObjectRetentionRequest;
 
 /**
  * Basic OBS interface
@@ -895,6 +913,19 @@ public interface IObsClient extends IObsBucketExtendClient {
      * @since 3.20.3
      */
     HeaderResponse deleteBucketCors(BaseBucketRequest request) throws ObsException;
+
+    /**
+     * Send a bucket preflight request for CORS.
+     *
+     * @param request
+     *            Request parameters for the bucket preflight request
+     * @return Response to the bucket preflight request
+     * @throws ObsException
+     *             OBS SDK self-defined exception, thrown when the interface
+     *             fails to be called or access to OBS fails
+     * @since 3.20.3
+     */
+    OptionsInfoResult optionsBucket(OptionsInfoRequest request) throws ObsException;
 
     /**
      * Obtain the logging settings of a bucket.
@@ -2360,6 +2391,133 @@ public interface IObsClient extends IObsBucketExtendClient {
     GetBucketTrashResult getBucketTrash(GetBucketTrashRequest getBucketTrashRequest) throws ObsException;
 
     HeaderResponse deleteBucketTrash(DeleteBucketTrashRequest deleteBucketTrashRequest) throws ObsException;
+
+    /**
+     * Set the online decompression policy of a bucket.
+     *
+     * @param request
+     *            Request parameters for setting compress policy
+     * @return Common response headers
+     * @throws ObsException
+     *             OBS SDK self-defined exception, thrown when the interface
+     *             fails to be called or access to OBS fails
+     */
+    HeaderResponse setBucketCompressPolicy(SetBucketCompressPolicyRequest request) throws ObsException;
+
+    /**
+     * Get the online decompression policy of a bucket.
+     *
+     * @param request
+     *            Request parameters for getting compress policy
+     * @return The compress policy configuration
+     * @throws ObsException
+     *             OBS SDK self-defined exception, thrown when the interface
+     *             fails to be called or access to OBS fails
+     */
+    GetBucketCompressPolicyResult getBucketCompressPolicy(GetBucketCompressPolicyRequest request)
+            throws ObsException;
+
+    /**
+     * Delete the online decompression policy of a bucket.
+     *
+     * @param request
+     *            Request parameters for deleting compress policy
+     * @return Common response headers
+     * @throws ObsException
+     *             OBS SDK self-defined exception, thrown when the interface
+     *             fails to be called or access to OBS fails
+     */
+    HeaderResponse deleteBucketCompressPolicy(DeleteBucketCompressPolicyRequest request) throws ObsException;
+
+    /**
+     * Set the DIS notification policy of a bucket.
+     *
+     * @param request
+     *            Request parameters for setting DIS notification policy
+     * @return Common response headers
+     * @throws ObsException
+     *             OBS SDK self-defined exception, thrown when the interface
+     *             fails to be called or access to OBS fails
+     */
+    HeaderResponse setBucketDisPolicy(SetBucketDisPolicyRequest request) throws ObsException;
+
+    /**
+     * Get the DIS notification policy of a bucket.
+     *
+     * @param request
+     *            Request parameters for getting DIS notification policy
+     * @return The DIS notification policy configuration
+     * @throws ObsException
+     *             OBS SDK self-defined exception, thrown when the interface
+     *             fails to be called or access to OBS fails
+     */
+    GetBucketDisPolicyResult getBucketDisPolicy(GetBucketDisPolicyRequest request) throws ObsException;
+
+    /**
+     * Delete the DIS notification policy of a bucket.
+     *
+     * @param request
+     *            Request parameters for deleting DIS notification policy
+     * @return Common response headers
+     * @throws ObsException
+     *             OBS SDK self-defined exception, thrown when the interface
+     *             fails to be called or access to OBS fails
+     */
+    HeaderResponse deleteBucketDisPolicy(DeleteBucketDisPolicyRequest request) throws ObsException;
+
+    /**
+     * Set the mirror back to source policy of a bucket.
+     *
+     * @param request
+     *            Request parameters for setting mirror back to source policy
+     * @return Common response headers
+     * @throws ObsException
+     *             OBS SDK self-defined exception, thrown when the interface
+     *             fails to be called or access to OBS fails
+     */
+    HeaderResponse setBucketMirrorBackToSource(SetBucketMirrorBackToSourceRequest request) throws ObsException;
+
+    /**
+     * Get the mirror back to source policy of a bucket.
+     *
+     * @param request
+     *            Request parameters for getting mirror back to source policy
+     * @return The mirror back to source configuration
+     * @throws ObsException
+     *             OBS SDK self-defined exception, thrown when the interface
+     *             fails to be called or access to OBS fails
+     */
+    GetBucketMirrorBackToSourceResult getBucketMirrorBackToSource(GetBucketMirrorBackToSourceRequest request)
+            throws ObsException;
+
+    /**
+     * Delete the mirror back to source policy of a bucket.
+     *
+     * @param request
+     *            Request parameters for deleting mirror back to source policy
+     * @return Common response headers
+     * @throws ObsException
+     *             OBS SDK self-defined exception, thrown when the interface
+     *             fails to be called or access to OBS fails
+     */
+    HeaderResponse deleteBucketMirrorBackToSource(DeleteBucketMirrorBackToSourceRequest request) throws ObsException;
+
+    HeaderResponse setObjectLockConfiguration(SetObjectLockConfigurationRequest request) throws ObsException;
+
+    GetObjectLockConfigurationResult getObjectLockConfiguration(GetObjectLockConfigurationRequest request) throws ObsException;
+
+    /**
+     * Set object-level WORM protection policy.
+     *
+     * @param request
+     *            Request parameters for setting object retention
+     * @return Common response headers
+     * @throws ObsException
+     *             OBS SDK self-defined exception, thrown when the interface
+     *             fails to be called or access to OBS fails
+     * @since 3.24.4
+     */
+    HeaderResponse setObjectRetention(SetObjectRetentionRequest request) throws ObsException;
 
     HeaderResponse setInventoryConfiguration(SetInventoryConfigurationRequest request) throws ObsException;
 

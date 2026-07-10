@@ -30,6 +30,7 @@ import com.obs.services.model.GetObjectRequest;
 import com.obs.services.model.MonitorableProgressListener;
 import com.obs.services.model.ObjectMetadata;
 import com.obs.services.model.ObsObject;
+import com.obs.services.model.ResumableTransferHandle;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -79,6 +80,12 @@ public class DownloadResumableClient {
                 downloadFileRequest.setCheckpointFile(downloadFileRequest.getDownloadFile() + ".downloadFile_record");
             }
         }
+
+        ResumableTransferHandle transferHandle = downloadFileRequest.getTransferHandle();
+        if (transferHandle != null) {
+            transferHandle.bind(downloadFileRequest.getCancelHandler());
+        }
+
         try {
             return downloadCheckPoint(downloadFileRequest);
         } catch (ServiceException e) {
@@ -150,7 +157,18 @@ public class DownloadResumableClient {
 
         // 并发下载分片
         DownloadResult downloadResult = this.download(downloadCheckPoint, downloadFileRequest);
+
+        if (isTransferPaused(downloadFileRequest)) {
+            if (downloadFileRequest.isEnableCheckpoint()) {
+                downloadCheckPoint.record(downloadFileRequest.getCheckpointFile());
+            }
+            log.info("downloadFileRequest is paused, checkpoint saved");
+            throw ServiceUtils.changeFromException(
+                    new ObsException("downloadFileRequest is paused, can be resumed later"));
+        }
+
         checkDownloadResult(downloadFileRequest, downloadCheckPoint, downloadResult);
+
         // 重命名临时文件
         renameTo(downloadFileRequest.getTempDownloadFile(), downloadFileRequest.getDownloadFile());
 
@@ -245,6 +263,14 @@ public class DownloadResumableClient {
         return objectMetadata;
     }
 
+    private static boolean isTransferPaused(DownloadFileRequest request) {
+        return request.getTransferHandle() != null && request.getTransferHandle().isPaused();
+    }
+
+    private static boolean isTransferCancelled(DownloadFileRequest request) {
+        return request.getTransferHandle() != null && request.getTransferHandle().isCancelled();
+    }
+
     private void renameTo(String tempDownloadFilePath, String downloadFilePath) throws IOException {
         File tmpfile = new File(tempDownloadFilePath);
         File downloadFile = new File(downloadFilePath);
@@ -331,6 +357,9 @@ public class DownloadResumableClient {
 
         if (downloadFileRequest.getTaskNum() == 1) {
             for (Task task : unfinishedTasks) {
+                if (isTransferPaused(downloadFileRequest)) {
+                    break;
+                }
                 task.setProgressManager(progressManager);
                 taskResults.add(task.call());
             }
@@ -343,6 +372,9 @@ public class DownloadResumableClient {
 
         ExecutorService service = Executors.newFixedThreadPool(downloadFileRequest.getTaskNum());
         for (Task task : unfinishedTasks) {
+            if (isTransferPaused(downloadFileRequest)) {
+                break;
+            }
             task.setProgressManager(progressManager);
             futures.add(service.submit(task));
         }
@@ -413,7 +445,19 @@ public class DownloadResumableClient {
                 tr.setFailed(true);
                 return tr;
             }
-            
+
+            if (isTransferPaused(downloadFileRequest)) {
+                log.info(String.format(Locale.ROOT,
+                        "Task %d:%s download part %d paused, skipping.", id, name, partIndex + 1));
+                return tr;
+            }
+
+            if (isTransferCancelled(downloadFileRequest)) {
+                tr.setFailed(true);
+                tr.setException(new ObsException("download task is cancelled"));
+                return tr;
+            }
+
             RandomAccessFile output = null;
             InputStream content = null;
             InputStream progressContent = null;
@@ -538,6 +582,12 @@ public class DownloadResumableClient {
             getObjectRequest.setRangeEnd(downloadPart.end);
             getObjectRequest.setCacheOption(downloadFileRequest.getCacheOption());
             getObjectRequest.setTtl(downloadFileRequest.getTtl());
+
+            ResumableTransferHandle handle = downloadFileRequest.getTransferHandle();
+            if (handle != null && handle.getCancelHandler() != null) {
+                getObjectRequest.setCancelHandler(handle.getCancelHandler());
+            }
+
             return getObjectRequest;
         }
 

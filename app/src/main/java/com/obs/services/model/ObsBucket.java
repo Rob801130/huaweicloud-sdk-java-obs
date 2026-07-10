@@ -207,6 +207,7 @@ public class ObsBucket extends S3Bucket {
         this.bucketTypeEnum = bucketTypeEnum;
     }
 
+
     @Override
     public StorageClassEnum getBucketStorageClass() {
         return storageClass;
@@ -227,6 +228,6 @@ public class ObsBucket extends S3Bucket {
     public String toString() {
         return "ObsBucket [bucketName=" + bucketName + ", owner=" + owner + ", creationDate=" + creationDate
                 + ", location=" + location + ", storageClass=" + storageClass + ", metadata=" + metadata + ", acl="
-                + acl + "]";
+                + acl + ", iESLocation=" + iESLocation + ", edgeLocation=" + edgeLocation + "]";
     }
 }

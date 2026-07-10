@@ -142,10 +142,40 @@ public class ReplicationConfiguration extends HeaderResponse {
         }
     }
 
+    public static class AccessControlTranslation {
+        private String owner;
+
+        /**
+         * Obtain the owner of the replicated object.
+         *
+         * @return Owner value, default is "destination"
+         */
+        public String getOwner() {
+            return owner;
+        }
+
+        /**
+         * Set the owner of the replicated object.
+         *
+         * @param owner
+         *            Owner value, typically "destination"
+         */
+        public void setOwner(String owner) {
+            this.owner = owner;
+        }
+
+        @Override
+        public String toString() {
+            return "AccessControlTranslation [owner=" + owner + "]";
+        }
+    }
+
     public static class Destination {
         private String bucket;
         private StorageClassEnum storageClass;
         private DeleteDataEnum deleteData;
+        private AccessControlTranslation accessControlTranslation;
+        private String account;
 
         /**
          * Obtain the information about the destination bucket.
@@ -198,9 +228,49 @@ public class ReplicationConfiguration extends HeaderResponse {
         public void setDeleteData(DeleteDataEnum deleteData) {
             this.deleteData = deleteData;
         }
+
+        /**
+         * Obtain the access control translation configuration.
+         *
+         * @return AccessControlTranslation configuration
+         */
+        public AccessControlTranslation getAccessControlTranslation() {
+            return accessControlTranslation;
+        }
+
+        /**
+         * Set the access control translation configuration.
+         *
+         * @param accessControlTranslation
+         *            AccessControlTranslation configuration
+         */
+        public void setAccessControlTranslation(AccessControlTranslation accessControlTranslation) {
+            this.accessControlTranslation = accessControlTranslation;
+        }
+
+        /**
+         * Obtain the account ID of the destination bucket owner.
+         *
+         * @return Account ID
+         */
+        public String getAccount() {
+            return account;
+        }
+
+        /**
+         * Set the account ID of the destination bucket owner.
+         *
+         * @param account
+         *            Account ID
+         */
+        public void setAccount(String account) {
+            this.account = account;
+        }
+
         @Override
         public String toString() {
-            return "Destination [bucket=" + bucket + ", storageClass=" + storageClass + "]";
+            return "Destination [bucket=" + bucket + ", storageClass=" + storageClass
+                    + ", accessControlTranslation=" + accessControlTranslation + ", account=" + account + "]";
         }
     }
 

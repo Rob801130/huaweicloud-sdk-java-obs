@@ -38,6 +38,10 @@ import static com.obs.services.internal.ObsConstraint.TAG_SNAPSHOT_DIR;
 import static com.obs.services.internal.ObsConstraint.TAG_SNAPSHOT_DIR_COUNT;
 import static com.obs.services.internal.ObsConstraint.TRUNCATED_CHECK;
 import static com.obs.services.internal.xml.BucketTrashConfigurationXMLBuilder.RESERVED_DAYS;
+import static com.obs.services.internal.xml.ObjectLockConfigurationXMLBuilder.OBJECT_LOCK_ENABLED;
+import static com.obs.services.internal.xml.ObjectLockConfigurationXMLBuilder.MODE;
+import static com.obs.services.internal.xml.ObjectLockConfigurationXMLBuilder.DAYS;
+import static com.obs.services.internal.xml.ObjectLockConfigurationXMLBuilder.YEARS;
 import static com.obs.services.model.bpa.BucketPolicyStatus.POLICY_STATUS;
 import static com.obs.services.model.bpa.BucketPublicAccessBlock.BLOCK_PUBLIC_ACLS;
 import static com.obs.services.model.bpa.BucketPublicAccessBlock.BLOCK_PUBLIC_POLICY;
@@ -862,6 +866,13 @@ public class XmlResponsesSaxParser {
                         break;
                     case "ClusterType":
                         currentBucket.setClustertype(elementText);
+                        break;
+                    case "IESLocation":
+                        currentBucket.setIESLocation(elementText);
+                        break;
+                    case "EdgeLocation":
+                        currentBucket.setEdgeLocation(elementText);
+                        break;
                     default:
                         break;
                 }
@@ -951,6 +962,42 @@ public class XmlResponsesSaxParser {
         public void endElement(String name, String elementText) {
             if (name.equals("LocationConstraint") || name.equals("Location")) {
                 location = elementText;
+            }
+        }
+    }
+
+    public static class ObjectLockConfigurationXMLHandler extends DefaultXmlHandler {
+        private String objectLockEnabled;
+        private String mode;
+        private String days;
+        private String years;
+
+        public String getObjectLockEnabled() {
+            return objectLockEnabled;
+        }
+
+        public String getMode() {
+            return mode;
+        }
+
+        public String getDays() {
+            return days;
+        }
+
+        public String getYears() {
+            return years;
+        }
+
+        @Override
+        public void endElement(String name, String elementText) {
+            if (OBJECT_LOCK_ENABLED.equals(name)) {
+                objectLockEnabled = elementText;
+            } else if (MODE.equals(name)) {
+                mode = elementText;
+            } else if (DAYS.equals(name)) {
+                days = elementText;
+            } else if (YEARS.equals(name)) {
+                years = elementText;
             }
         }
     }
@@ -2701,6 +2748,10 @@ public class XmlResponsesSaxParser {
                 currentRule = new ReplicationConfiguration.Rule();
             } else if (Constants.ObsBucketReplicationRequestParams.DESTINATION.equals(name)) {
                 currentRule.setDestination(new ReplicationConfiguration.Destination());
+            } else if (Constants.ObsBucketReplicationRequestParams.ACCESS_CONTROL_TRANSLATION.equals(name)) {
+                if (currentRule != null && currentRule.getDestination() != null) {
+                    currentRule.getDestination().setAccessControlTranslation(new ReplicationConfiguration.AccessControlTranslation());
+                }
             }
         }
 
@@ -2735,6 +2786,12 @@ public class XmlResponsesSaxParser {
                 currentRule.setHistoricalObjectReplication(HistoricalObjectReplicationEnum.getValueFromCode(content));
             } else if (Constants.ObsBucketReplicationRequestParams.DELETE_DATA.equals(name)) {
                 currentRule.getDestination().setDeleteData(DeleteDataEnum.getValueFromCode(content));
+            } else if (Constants.ObsBucketReplicationRequestParams.ACCOUNT.equals(name)) {
+                currentRule.getDestination().setAccount(content);
+            } else if (Constants.ObsBucketReplicationRequestParams.OWNER.equals(name)) {
+                if (currentRule.getDestination().getAccessControlTranslation() != null) {
+                    currentRule.getDestination().getAccessControlTranslation().setOwner(content);
+                }
             }
         }
     }

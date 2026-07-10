@@ -271,7 +271,9 @@ public abstract class ObsMultipartObjectService extends ObsObjectBaseService {
         Response response = this.performRequest(newTransResult, true, false, false, false);
         this.verifyResponseContentType(response);
 
-        CopyPartResult ret = getXmlResponseSaxParser().parse(new HttpMethodReleaseInputStream(response),
+        ResponseBodyHolder responseContent = this.readResponseBodyAsHolder(response);
+        this.verifyCopyResponseBodyNotError(responseContent.body, response, request.getBucketName());
+        CopyPartResult ret = getXmlResponseSaxParser().parse(responseContent.stream,
                 XmlResponsesSaxParser.CopyPartResultHandler.class, true).getCopyPartResult(request.getPartNumber());
 
         setHeadersAndStatus(ret, response);

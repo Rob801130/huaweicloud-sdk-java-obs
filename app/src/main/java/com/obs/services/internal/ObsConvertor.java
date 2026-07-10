@@ -269,6 +269,16 @@ public class ObsConvertor extends V2Convertor {
                         builder.e(Constants.ObsBucketReplicationRequestParams.DELETE_DATA)
                                 .t(rule.getDestination().getDeleteData().getCode());
                     }
+                    if (rule.getDestination().getAccount() != null) {
+                        builder.e(Constants.ObsBucketReplicationRequestParams.ACCOUNT)
+                                .t(rule.getDestination().getAccount());
+                    }
+                    if (rule.getDestination().getAccessControlTranslation() != null
+                            && rule.getDestination().getAccessControlTranslation().getOwner() != null) {
+                        builder.e(Constants.ObsBucketReplicationRequestParams.ACCESS_CONTROL_TRANSLATION)
+                                .e(Constants.ObsBucketReplicationRequestParams.OWNER)
+                                .t(rule.getDestination().getAccessControlTranslation().getOwner()).up().up();
+                    }
                     builder = builder.up();
                 }
                 builder = builder.up();
