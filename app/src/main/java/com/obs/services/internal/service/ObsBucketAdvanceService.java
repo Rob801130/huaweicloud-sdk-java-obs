@@ -34,6 +34,7 @@ import com.obs.services.internal.xml.BucketPublicAccessBlockXMLBuilder;
 import com.obs.services.internal.xml.CustomDomainCertificateConfigXMLBuilder;
 import com.obs.services.internal.xml.OBSXMLBuilder;
 import com.obs.services.internal.xml.BucketTrashConfigurationXMLBuilder;
+import com.obs.services.internal.xml.ObjectLockConfigurationXMLBuilder;
 import com.obs.services.internal.xml.QosConfigurationXMLBuilder;
 import com.obs.services.model.AccessControlList;
 import com.obs.services.model.AuthTypeEnum;
@@ -106,6 +107,27 @@ import com.obs.services.model.trash.DeleteBucketTrashRequest;
 import com.obs.services.model.trash.GetBucketTrashRequest;
 import com.obs.services.model.trash.GetBucketTrashResult;
 import com.obs.services.model.trash.SetBucketTrashRequest;
+import com.obs.services.model.compress.CompressPolicyConfiguration;
+import com.obs.services.model.compress.DeleteBucketCompressPolicyRequest;
+import com.obs.services.model.compress.GetBucketCompressPolicyRequest;
+import com.obs.services.model.compress.GetBucketCompressPolicyResult;
+import com.obs.services.model.compress.SetBucketCompressPolicyRequest;
+import com.obs.services.model.dis.DeleteBucketDisPolicyRequest;
+import com.obs.services.model.dis.DisPolicyConfiguration;
+import com.obs.services.model.dis.GetBucketDisPolicyRequest;
+import com.obs.services.model.dis.GetBucketDisPolicyResult;
+import com.obs.services.model.dis.SetBucketDisPolicyRequest;
+import com.obs.services.model.mirrorback.DeleteBucketMirrorBackToSourceRequest;
+import com.obs.services.model.mirrorback.GetBucketMirrorBackToSourceRequest;
+import com.obs.services.model.mirrorback.GetBucketMirrorBackToSourceResult;
+import com.obs.services.model.mirrorback.MirrorBackToSourceConfiguration;
+import com.obs.services.model.mirrorback.SetBucketMirrorBackToSourceRequest;
+import com.obs.services.model.objectlock.DefaultRetention;
+import com.obs.services.model.objectlock.GetObjectLockConfigurationRequest;
+import com.obs.services.model.objectlock.GetObjectLockConfigurationResult;
+import com.obs.services.model.objectlock.ObjectLockConfiguration;
+import com.obs.services.model.objectlock.ObjectLockRule;
+import com.obs.services.model.objectlock.SetObjectLockConfigurationRequest;
 import com.oef.services.model.RequestParamEnum;
 import okhttp3.Request;
 import okhttp3.RequestBody;
@@ -1070,6 +1092,195 @@ public abstract class ObsBucketAdvanceService extends ObsBucketBaseService {
                 this.getIHeaders(deleteBucketTrashRequest.getBucketName())),
             deleteBucketTrashRequest.getUserHeaders());
         return this.build(response);
+    }
+
+    protected HeaderResponse setBucketCompressPolicyImpl(SetBucketCompressPolicyRequest request) {
+        Map<String, String> requestParams = new HashMap<>();
+        requestParams.put(SpecialParamEnum.OBS_COMPRESS_POLICY.getOriginalStringCode(), "");
+        Map<String, String> headers = new HashMap<>();
+        transRequestPaymentHeaders(request, headers, this.getIHeaders(request.getBucketName()));
+        String jsonBody = JSONChange.objToJson(request.getCompressPolicyConfiguration());
+        headers.put(CommonHeaders.CONTENT_TYPE, Mimetypes.MIMETYPE_JSON);
+        NewTransResult transResult = transRequest(request);
+        transResult.setHeaders(headers);
+        transResult.setParams(requestParams);
+        transResult.setBody(createRequestBody(Mimetypes.MIMETYPE_JSON, jsonBody));
+        Response response = performRequest(transResult, true, false, false, false);
+        return build(response);
+    }
+
+    protected GetBucketCompressPolicyResult getBucketCompressPolicyImpl(GetBucketCompressPolicyRequest request) {
+        Map<String, String> requestParameters = new HashMap<>();
+        requestParameters.put(SpecialParamEnum.OBS_COMPRESS_POLICY.getOriginalStringCode(), "");
+
+        Response httpResponse = performRestGet(request.getBucketName(), null, requestParameters,
+            transRequestPaymentHeaders(request, null, this.getIHeaders(request.getBucketName())),
+            request.getUserHeaders());
+
+        this.verifyResponseContentTypeForJson(httpResponse);
+
+        String body = RestUtils.readBodyFromResponse(httpResponse);
+        CompressPolicyConfiguration config = (CompressPolicyConfiguration) JSONChange
+            .jsonToObj(new CompressPolicyConfiguration(), body);
+
+        GetBucketCompressPolicyResult result = new GetBucketCompressPolicyResult();
+        result.setCompressPolicyConfiguration(config);
+        setHeadersAndStatus(result, httpResponse);
+        return result;
+    }
+
+    protected HeaderResponse deleteBucketCompressPolicyImpl(DeleteBucketCompressPolicyRequest request) {
+        Map<String, String> requestParams = new HashMap<>();
+        requestParams.put(SpecialParamEnum.OBS_COMPRESS_POLICY.getOriginalStringCode(), "");
+        Response response = performRestDelete(request.getBucketName(), null, requestParams,
+            transRequestPaymentHeaders(request, null, this.getIHeaders(request.getBucketName())),
+            request.getUserHeaders());
+        return this.build(response);
+    }
+
+    protected HeaderResponse setBucketDisPolicyImpl(SetBucketDisPolicyRequest request) {
+        Map<String, String> requestParams = new HashMap<>();
+        requestParams.put(SpecialParamEnum.DIS_POLICY.getOriginalStringCode(), "");
+        Map<String, String> headers = new HashMap<>();
+        transRequestPaymentHeaders(request, headers, this.getIHeaders(request.getBucketName()));
+        String jsonBody = JSONChange.objToJson(request.getDisPolicyConfiguration());
+        headers.put(CommonHeaders.CONTENT_TYPE, Mimetypes.MIMETYPE_JSON);
+        NewTransResult transResult = transRequest(request);
+        transResult.setHeaders(headers);
+        transResult.setParams(requestParams);
+        transResult.setBody(createRequestBody(Mimetypes.MIMETYPE_JSON, jsonBody));
+        Response response = performRequest(transResult, true, false, false, false);
+        return build(response);
+    }
+
+    protected GetBucketDisPolicyResult getBucketDisPolicyImpl(GetBucketDisPolicyRequest request) {
+        Map<String, String> requestParameters = new HashMap<>();
+        requestParameters.put(SpecialParamEnum.DIS_POLICY.getOriginalStringCode(), "");
+
+        Response httpResponse = performRestGet(request.getBucketName(), null, requestParameters,
+            transRequestPaymentHeaders(request, null, this.getIHeaders(request.getBucketName())),
+            request.getUserHeaders());
+
+        this.verifyResponseContentTypeForJson(httpResponse);
+
+        String body = RestUtils.readBodyFromResponse(httpResponse);
+        DisPolicyConfiguration config = (DisPolicyConfiguration) JSONChange
+            .jsonToObj(new DisPolicyConfiguration(), body);
+
+        GetBucketDisPolicyResult result = new GetBucketDisPolicyResult();
+        result.setDisPolicyConfiguration(config);
+        setHeadersAndStatus(result, httpResponse);
+        return result;
+    }
+
+    protected HeaderResponse deleteBucketDisPolicyImpl(DeleteBucketDisPolicyRequest request) {
+        Map<String, String> requestParams = new HashMap<>();
+        requestParams.put(SpecialParamEnum.DIS_POLICY.getOriginalStringCode(), "");
+        Response response = performRestDelete(request.getBucketName(), null, requestParams,
+            transRequestPaymentHeaders(request, null, this.getIHeaders(request.getBucketName())),
+            request.getUserHeaders());
+        return this.build(response);
+    }
+
+    protected HeaderResponse setBucketMirrorBackToSourceImpl(SetBucketMirrorBackToSourceRequest request) {
+        Map<String, String> requestParams = new HashMap<>();
+        requestParams.put(SpecialParamEnum.MIRROR_BACK_TO_SOURCE.getOriginalStringCode(), "");
+        Map<String, String> headers = new HashMap<>();
+        transRequestPaymentHeaders(request, headers, this.getIHeaders(request.getBucketName()));
+        String jsonBody = JSONChange.objToJson(request.getMirrorBackToSourceConfiguration());
+        headers.put(CommonHeaders.CONTENT_TYPE, Mimetypes.MIMETYPE_JSON);
+        NewTransResult transResult = transRequest(request);
+        transResult.setHeaders(headers);
+        transResult.setParams(requestParams);
+        transResult.setBody(createRequestBody(Mimetypes.MIMETYPE_JSON, jsonBody));
+        Response response = performRequest(transResult, true, false, false, false);
+        return build(response);
+    }
+
+    protected GetBucketMirrorBackToSourceResult getBucketMirrorBackToSourceImpl(
+            GetBucketMirrorBackToSourceRequest request) {
+        Map<String, String> requestParameters = new HashMap<>();
+        requestParameters.put(SpecialParamEnum.MIRROR_BACK_TO_SOURCE.getOriginalStringCode(), "");
+
+        Response httpResponse = performRestGet(request.getBucketName(), null, requestParameters,
+            transRequestPaymentHeaders(request, null, this.getIHeaders(request.getBucketName())),
+            request.getUserHeaders());
+
+        this.verifyResponseContentTypeForJson(httpResponse);
+
+        String body = RestUtils.readBodyFromResponse(httpResponse);
+        MirrorBackToSourceConfiguration config = (MirrorBackToSourceConfiguration) JSONChange
+            .jsonToObj(new MirrorBackToSourceConfiguration(), body);
+
+        GetBucketMirrorBackToSourceResult result = new GetBucketMirrorBackToSourceResult();
+        result.setMirrorBackToSourceConfiguration(config);
+        setHeadersAndStatus(result, httpResponse);
+        return result;
+    }
+
+    protected HeaderResponse deleteBucketMirrorBackToSourceImpl(DeleteBucketMirrorBackToSourceRequest request) {
+        Map<String, String> requestParams = new HashMap<>();
+        requestParams.put(SpecialParamEnum.MIRROR_BACK_TO_SOURCE.getOriginalStringCode(), "");
+        Response response = performRestDelete(request.getBucketName(), null, requestParams,
+            transRequestPaymentHeaders(request, null, this.getIHeaders(request.getBucketName())),
+            request.getUserHeaders());
+        return this.build(response);
+    }
+
+    protected HeaderResponse setObjectLockConfigurationImpl(SetObjectLockConfigurationRequest request) {
+        Map<String, String> requestParams = new HashMap<>();
+        requestParams.put(SpecialParamEnum.OBJECT_LOCK.getOriginalStringCode(), "");
+        Map<String, String> headers = new HashMap<>();
+        transRequestPaymentHeaders(request, headers, this.getIHeaders(request.getBucketName()));
+        ObjectLockConfigurationXMLBuilder xmlBuilder = new ObjectLockConfigurationXMLBuilder();
+        String xml = xmlBuilder.buildXML(request.getObjectLockConfiguration());
+        headers.put(CommonHeaders.CONTENT_LENGTH, String.valueOf(xml.length()));
+        headers.put(CommonHeaders.CONTENT_MD5, ServiceUtils.computeMD5(xml));
+        headers.put(CommonHeaders.CONTENT_TYPE, Mimetypes.MIMETYPE_XML);
+        NewTransResult transResult = transRequest(request);
+        transResult.setHeaders(headers);
+        transResult.setParams(requestParams);
+        transResult.setBody(createRequestBody(Mimetypes.MIMETYPE_XML, xml));
+        Response response = performRequest(transResult, true, false, false, false);
+        return build(response);
+    }
+
+    protected GetObjectLockConfigurationResult getObjectLockConfigurationImpl(
+        GetObjectLockConfigurationRequest request) {
+        Map<String, String> requestParameters = new HashMap<>();
+        requestParameters.put(SpecialParamEnum.OBJECT_LOCK.getOriginalStringCode(), "");
+
+        Response httpResponse = performRestGet(request.getBucketName(), null, requestParameters,
+            transRequestPaymentHeaders(request, null, this.getIHeaders(request.getBucketName())),
+            request.getUserHeaders());
+
+        this.verifyResponseContentType(httpResponse);
+
+        XmlResponsesSaxParser.ObjectLockConfigurationXMLHandler handler =
+            getXmlResponseSaxParser().parse(new HttpMethodReleaseInputStream(httpResponse),
+                XmlResponsesSaxParser.ObjectLockConfigurationXMLHandler.class, false);
+
+        ObjectLockConfiguration config = new ObjectLockConfiguration();
+        config.setObjectLockEnabled(handler.getObjectLockEnabled());
+
+        if (handler.getMode() != null || handler.getDays() != null || handler.getYears() != null) {
+            DefaultRetention retention = new DefaultRetention();
+            retention.setMode(handler.getMode());
+            if (handler.getDays() != null) {
+                retention.setDays(Integer.parseInt(handler.getDays()));
+            }
+            if (handler.getYears() != null) {
+                retention.setYears(Integer.parseInt(handler.getYears()));
+            }
+            ObjectLockRule rule = new ObjectLockRule();
+            rule.setDefaultRetention(retention);
+            config.setRule(rule);
+        }
+
+        GetObjectLockConfigurationResult result = new GetObjectLockConfigurationResult();
+        result.setObjectLockConfiguration(config);
+        setHeadersAndStatus(result, httpResponse);
+        return result;
     }
 
     protected void setVirtualReplication(String agencyId, String sourceBucketName, String destBucketName) {

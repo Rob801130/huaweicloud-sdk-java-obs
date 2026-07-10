@@ -50,6 +50,10 @@ public class S3Bucket extends HeaderResponse {
 
     protected BucketTypeEnum bucketTypeEnum;
 
+    protected String iESLocation;
+
+    protected String edgeLocation;
+
     public S3Bucket() {
 
     }
@@ -133,10 +137,48 @@ public class S3Bucket extends HeaderResponse {
         this.clustertype = clustertype;
     }
 
+    /**
+     * Obtain the IES location of the bucket.
+     *
+     * @return IES location of the bucket, which is the AZ Id of the CloudPond bucket site.
+     *         Returns null for non-CloudPond buckets.
+     */
+    public String getIESLocation() {
+        return iESLocation;
+    }
+
+    /**
+     * Set the IES location of the bucket.
+     *
+     * @param iESLocation IES location of the bucket, which is the AZ Id of the CloudPond bucket site.
+     */
+    public void setIESLocation(String iESLocation) {
+        this.iESLocation = iESLocation;
+    }
+
+    /**
+     * Obtain the edge location of the bucket.
+     *
+     * @return Edge location of the bucket, which is the AZ Id of the intelligent edge cloud bucket site.
+     *         Returns null for non-intelligent edge cloud buckets.
+     */
+    public String getEdgeLocation() {
+        return edgeLocation;
+    }
+
+    /**
+     * Set the edge location of the bucket.
+     *
+     * @param edgeLocation Edge location of the bucket, which is the AZ Id of the intelligent edge cloud bucket site.
+     */
+    public void setEdgeLocation(String edgeLocation) {
+        this.edgeLocation = edgeLocation;
+    }
+
     @Override
     public String toString() {
         return "ObsBucket [bucketName=" + bucketName + ", owner=" + owner + ", creationDate=" + creationDate
                 + ", location=" + location + ", storageClass=" + storageClass + ", metadata=" + metadata + ", acl="
-                + acl + ", clustertype= " + clustertype + "]";
+                + acl + ", clustertype= " + clustertype + ", iESLocation=" + iESLocation + ", edgeLocation=" + edgeLocation + "]";
     }
 }

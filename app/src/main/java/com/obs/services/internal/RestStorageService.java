@@ -701,14 +701,15 @@ public abstract class RestStorageService extends RestConnectionService {
     private ServiceException createServiceException(String message, Response response,
             StringBuilder stringToSignToReturn) {
         String xmlMessage = readResponseMessage(response);
+        String contentType = response.header(CommonHeaders.CONTENT_TYPE);
         if (stringToSignToReturn != null) {
             String errorMessageForSignatureDoesNotMatch =
                     createErrorMessageForSignatureDoesNotMatch(xmlMessage, message, stringToSignToReturn);
-            ServiceException serviceException = new ServiceException(errorMessageForSignatureDoesNotMatch, xmlMessage);
+            ServiceException serviceException = new ServiceException(errorMessageForSignatureDoesNotMatch, xmlMessage, contentType);
             serviceException.setErrorMessage(serviceException.getErrorMessage()+"\n"+errorMessageForSignatureDoesNotMatch);
             return serviceException;
         } else {
-            return new ServiceException(message, xmlMessage);
+            return new ServiceException(message, xmlMessage, contentType);
         }
     }
 

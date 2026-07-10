@@ -3,9 +3,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use
  * this file except in compliance with the License.  You may obtain a copy of the
  * License at
- * 
+ * <p>
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ * <p>
  * Unless required by applicable law or agreed to in writing, software distributed
  * under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
  * CONDITIONS OF ANY KIND, either express or implied.  See the License for the
@@ -25,6 +25,7 @@ import javax.xml.parsers.ParserConfigurationException;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
+import com.obs.services.internal.utils.Mimetypes;
 import com.obs.services.internal.utils.ServiceUtils;
 import com.obs.services.internal.xml.OBSXMLBuilder;
 
@@ -51,7 +52,22 @@ public class ServiceException extends RuntimeException {
     private String encodedAuthorizationMessage;
 
     public ServiceException(String message, String xmlMessage) {
-        this(message, xmlMessage, null);
+        this(message, xmlMessage, (Throwable) null);
+    }
+
+    public ServiceException(String message, String responseBody, String contentType) {
+        this(message, responseBody, contentType, null);
+    }
+
+    public ServiceException(String message, String responseBody, String contentType, Throwable cause) {
+        super(message, cause);
+        if (ServiceUtils.isValid(responseBody)) {
+            if (contentType != null && contentType.contains(Mimetypes.MIMETYPE_JSON)) {
+                parseJsonMessage(responseBody);
+            } else {
+                parseXmlMessage(responseBody);
+            }
+        }
     }
 
     public ServiceException(String message, String xmlMessage, Throwable cause) {
@@ -128,7 +144,27 @@ public class ServiceException extends RuntimeException {
         }
         this.encodedAuthorizationMessage = findXmlElementText(xmlMessage,"EncodedAuthorizationMessage");
     }
-    
+
+    private void parseJsonMessage(String jsonMessage) {
+        String cleaned = jsonMessage.replaceAll("\n", "").trim();
+        this.xmlMessage = cleaned;
+
+        this.errorCode = findJsonFieldValue(cleaned, "code");
+        this.errorMessage = findJsonFieldValue(cleaned, "message");
+        this.errorRequestId = findJsonFieldValue(cleaned, "request_id");
+    }
+
+    private String findJsonFieldValue(String json, String fieldName) {
+        // Simple regex-based JSON field extraction for flat error objects
+        // Matches "fieldName":"value" or "fieldName": "value"
+        Pattern pattern = Pattern.compile("\"" + fieldName + "\"\\s*:\\s*\"([^\"]*)\"");
+        Matcher matcher = pattern.matcher(json);
+        if (matcher.find()) {
+            return matcher.group(1);
+        }
+        return null;
+    }
+
 
     public String getErrorCode() {
         return this.errorCode;

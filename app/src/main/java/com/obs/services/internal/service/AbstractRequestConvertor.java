@@ -41,6 +41,9 @@ import okhttp3.MediaType;
 import okhttp3.RequestBody;
 import okhttp3.Response;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Method;
 import java.net.URLDecoder;
@@ -400,5 +403,77 @@ public abstract class AbstractRequestConvertor extends RestStorageService {
         newTransResult.setObjectKey(request.getObjectKey());
         newTransResult.setIsEncodeHeaders(request.isEncodeHeaders());
         return newTransResult;
+    }
+
+    /**
+     * 辅助类：持有响应体的字符串表示和可重用的InputStream。
+     * 用于在SAX解析前预读取响应体，以便进行错误检测。
+     */
+    protected static class ResponseBodyHolder {
+        public final String body;
+        public final InputStream stream;
+
+        public ResponseBodyHolder(String body, InputStream stream) {
+            this.body = body;
+            this.stream = stream;
+        }
+    }
+
+    /**
+     * 读取响应体为字符串，同时返回可重用的InputStream供SAX解析器使用。
+     * copyObject/copyPart响应体通常很小（几百字节），缓冲开销可忽略。
+     *
+     * @param response OkHttp Response对象
+     * @return ResponseBodyHolder 包含响应体字符串和可重用InputStream
+     */
+    protected ResponseBodyHolder readResponseBodyAsHolder(Response response) {
+        String body = null;
+        try {
+            if (response.body() != null) {
+                body = response.body().string();
+            }
+        } catch (IOException e) {
+            if (log.isWarnEnabled()) {
+                log.warn("Read response body failed.", e);
+            }
+        }
+        InputStream stream = ServiceUtils.isValid(body)
+                ? new ByteArrayInputStream(body.getBytes(StandardCharsets.UTF_8))
+                : new ByteArrayInputStream(new byte[]{});
+        return new ResponseBodyHolder(body, stream);
+    }
+
+    /**
+     * 检查响应体是否包含错误XML结构。
+     * 如果包含&lt;Error&gt;元素，构造并抛出包含完整错误信息的ServiceException。
+     * 此方法用于处理HTTP 200但响应体包含错误文档的场景（copyObject/copyPart异步复制场景）。
+     *
+     * @param responseBody 响应体字符串
+     * @param response OkHttp Response对象
+     * @param bucketName 桶名，用于获取认证头信息
+     * @throws ServiceException 当响应体包含错误文档时抛出
+     */
+    protected void verifyCopyResponseBodyNotError(String responseBody, Response response, String bucketName)
+            throws ServiceException {
+        if (responseBody != null && responseBody.contains("<Error>")) {
+            String contentType = response.header(Constants.CommonHeaders.CONTENT_TYPE);
+            ServiceException se = new ServiceException(
+                    "Received HTTP 200 response but the response body contains an error document.",
+                    responseBody, contentType);
+            se.setResponseCode(response.code());
+            se.setResponseStatus(response.message());
+            se.setResponseDate(response.header(Constants.CommonHeaders.DATE));
+            se.setErrorIndicator(response.header(Constants.CommonHeaders.X_RESERVED_INDICATOR));
+            se.setResponseHeaders(ServiceUtils.cleanRestMetadataMapV2(
+                    convertHeadersToMap(response.headers()),
+                    getRestHeaderPrefix(bucketName),
+                    getRestMetadataPrefix(bucketName), true));
+            if (!ServiceUtils.isValid(se.getErrorRequestId())) {
+                se.setRequestAndHostIds(
+                        response.header(getIHeaders(bucketName).requestIdHeader()),
+                        response.header(getIHeaders(bucketName).requestId2Header()));
+            }
+            throw se;
+        }
     }
 }

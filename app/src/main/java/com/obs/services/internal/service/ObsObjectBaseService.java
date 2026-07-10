@@ -33,6 +33,7 @@ import com.obs.services.internal.utils.JSONChange;
 import com.obs.services.internal.utils.Mimetypes;
 import com.obs.services.internal.utils.RestUtils;
 import com.obs.services.internal.utils.ServiceUtils;
+import com.obs.services.internal.xml.ObjectRetentionXMLBuilder;
 import com.obs.services.model.AccessControlList;
 import com.obs.services.model.AuthTypeEnum;
 import com.obs.services.model.CopyObjectRequest;
@@ -54,6 +55,7 @@ import com.obs.services.model.PutObjectRequest;
 import com.obs.services.model.PutObjectResult;
 import com.obs.services.model.SetObjectAclRequest;
 import com.obs.services.model.SetObjectMetadataRequest;
+import com.obs.services.model.objectlock.SetObjectRetentionRequest;
 import com.obs.services.model.SpecialParamEnum;
 import com.obs.services.model.StorageClassEnum;
 import com.obs.services.model.fs.DropFileResult;
@@ -363,8 +365,10 @@ public abstract class ObsObjectBaseService extends ObsBucketAdvanceService {
 
         this.verifyResponseContentType(response);
 
+        ResponseBodyHolder responseContent = this.readResponseBodyAsHolder(response);
+        this.verifyCopyResponseBodyNotError(responseContent.body, response, request.getBucketName());
         XmlResponsesSaxParser.CopyObjectResultHandler handler = getXmlResponseSaxParser().parse(
-                new HttpMethodReleaseInputStream(response), XmlResponsesSaxParser.CopyObjectResultHandler.class, false);
+                responseContent.stream, XmlResponsesSaxParser.CopyObjectResultHandler.class, false);
         CopyObjectResult copyRet = new CopyObjectResult(handler.getETag(), handler.getLastModified(),
                 response.header(this.getIHeaders(request.getBucketName()).versionIdHeader()),
                 response.header(this.getIHeaders(request.getBucketName()).copySourceVersionIdHeader()),
@@ -538,5 +542,28 @@ public abstract class ObsObjectBaseService extends ObsBucketAdvanceService {
         setHeadersAndStatus(objMetadata, response, needDecode);
         objMetadata.setUserMetadata(ServiceUtils.cleanUserMetadata(objMetadata.getOriginalHeaders(), needDecode));
         return objMetadata;
+    }
+
+    protected HeaderResponse setObjectRetentionImpl(SetObjectRetentionRequest request) throws ServiceException {
+        Map<String, String> requestParams = new HashMap<>();
+        requestParams.put(SpecialParamEnum.RETENTION.getOriginalStringCode(), "");
+        if (request.getVersionId() != null) {
+            requestParams.put(ObsRequestParams.VERSION_ID, request.getVersionId());
+        }
+        Map<String, String> headers = new HashMap<>();
+        transRequestPaymentHeaders(request, headers, this.getIHeaders(request.getBucketName()));
+
+        ObjectRetentionXMLBuilder xmlBuilder = new ObjectRetentionXMLBuilder();
+        String xml = xmlBuilder.buildXML(request.getRetention());
+        headers.put(CommonHeaders.CONTENT_LENGTH, String.valueOf(xml.length()));
+        headers.put(CommonHeaders.CONTENT_MD5, ServiceUtils.computeMD5(xml));
+        headers.put(CommonHeaders.CONTENT_TYPE, Mimetypes.MIMETYPE_XML);
+
+        NewTransResult transResult = transObjectRequest(request);
+        transResult.setHeaders(headers);
+        transResult.setParams(requestParams);
+        transResult.setBody(createRequestBody(Mimetypes.MIMETYPE_XML, xml));
+        Response response = performRequest(transResult, true, false, false, false);
+        return build(response);
     }
 }

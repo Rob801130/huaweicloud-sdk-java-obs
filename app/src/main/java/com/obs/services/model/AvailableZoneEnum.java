@@ -20,7 +20,20 @@ package com.obs.services.model;
  */
 public enum AvailableZoneEnum {
 
-    MULTI_AZ("3az");
+    /**
+     * Single availability zone
+     */
+    SINGLE_AZ("single-az"),
+
+    /**
+     * Multiple availability zones (3az)
+     */
+    MULTI_AZ("3az"),
+
+    /**
+     * Intelligent availability zones (multi-az)
+     */
+    INTELLIGENT_AZ("multi-az");
 
     private String code;
 
@@ -33,6 +46,9 @@ public enum AvailableZoneEnum {
     }
 
     public static AvailableZoneEnum getValueFromCode(String code) {
+        if (code == null) {
+            return null;
+        }
         for (AvailableZoneEnum val : AvailableZoneEnum.values()) {
             if (val.code.equals(code)) {
                 return val;
