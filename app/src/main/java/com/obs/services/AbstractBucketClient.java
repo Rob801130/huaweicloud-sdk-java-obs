@@ -3,9 +3,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use
  * this file except in compliance with the License.  You may obtain a copy of the
  * License at
- * 
+ * <p>
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ * <p>
  * Unless required by applicable law or agreed to in writing, software distributed
  * under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
  * CONDITIONS OF ANY KIND, either express or implied.  See the License for the
@@ -32,6 +32,8 @@ import com.obs.services.model.BucketLocationResponse;
 import com.obs.services.model.BucketLoggingConfiguration;
 import com.obs.services.model.BucketMetadataInfoRequest;
 import com.obs.services.model.BucketMetadataInfoResult;
+import com.obs.services.model.OptionsInfoRequest;
+import com.obs.services.model.OptionsInfoResult;
 import com.obs.services.model.BucketQuota;
 import com.obs.services.model.BucketStorageInfo;
 import com.obs.services.model.BucketStoragePolicyConfiguration;
@@ -714,10 +716,28 @@ public abstract class AbstractBucketClient extends AbstractDeprecatedBucketClien
                     }
                 });
     }
-    
+
     /*
      * (non-Javadoc)
-     * 
+     *
+     * @see com.obs.services.IObsClient#optionsBucket(com.obs.services.model.OptionsInfoRequest)
+     */
+    @Override
+    public OptionsInfoResult optionsBucket(final OptionsInfoRequest request) throws ObsException {
+        ServiceUtils.assertParameterNotNull(request, "OptionsInfoRequest is null");
+        ServiceUtils.assertParameterNotNull2(request.getBucketName(), "bucketName is null");
+        return this.doActionWithResult("optionsBucket", request.getBucketName(),
+                new ActionCallbackWithResult<OptionsInfoResult>() {
+                    @Override
+                    public OptionsInfoResult action() throws ServiceException {
+                        return AbstractBucketClient.this.optionsImpl(request.getBucketName(), null, request);
+                    }
+                });
+    }
+
+    /*
+     * (non-Javadoc)
+     *
      * @see com.obs.services.IObsClient#getBucketLogging(java.lang.String)
      */
     @Override

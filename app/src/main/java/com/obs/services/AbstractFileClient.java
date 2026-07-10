@@ -29,6 +29,7 @@ import com.obs.log.ILogger;
 import com.obs.log.LoggerBuilder;
 import com.obs.services.exception.ObsException;
 import com.obs.services.internal.DownloadResumableClient;
+import com.obs.services.internal.FileDeduplicationGuard;
 import com.obs.services.internal.UploadResumableClient;
 import com.obs.services.internal.task.DefaultTaskProgressStatus;
 import com.obs.services.internal.task.DropFolderTask;
@@ -50,6 +51,27 @@ import com.obs.services.model.fs.DropFolderRequest;
 
 public abstract class AbstractFileClient extends AbstractPFSClient {
     private static final ILogger ILOG = LoggerBuilder.getLogger(AbstractFileClient.class);
+
+    /**
+     * Deduplication guard for downloadFile operations.
+     * <p>
+     * Uses the enum singleton pattern to ensure process-level deduplication
+     * across all ObsClient instances. When enableFileDeduplication is true,
+     * concurrent download tasks to the same local file path will be rejected
+     * to prevent data corruption.
+     * </p>
+     * <p>
+     * Using <b>process-level scope</b> provides the following guarantees:
+     * <ul>
+     *   <li>Downloads using any ObsClient instance to the same downloadFile path are deduplicated</li>
+     *   <li>Different ObsClient instances share the same deduplication state within the JVM</li>
+     *   <li>The guard is thread-safe using ConcurrentHashMap</li>
+     * </ul>
+     * </p>
+     *
+     * @since 3.0.0
+     */
+    private final FileDeduplicationGuard DOWNLOAD_DEDUPLICATION_GUARD = FileDeduplicationGuard.INSTANCE;
     
     /*
      * (non-Javadoc)
@@ -64,15 +86,23 @@ public abstract class AbstractFileClient extends AbstractPFSClient {
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see com.obs.services.IObsClient#downloadFile(com.obs.services.model.
      * DownloadFileRequest)
      */
     @Override
     public DownloadFileResult downloadFile(DownloadFileRequest downloadFileRequest) throws ObsException {
+        FileDeduplicationGuard guard = null;
+        if (downloadFileRequest.isEnableFileDeduplication()) {
+            guard = DOWNLOAD_DEDUPLICATION_GUARD;
+            guard.acquire(downloadFileRequest);
+        }
         try {
             return new DownloadResumableClient(this).downloadFileResume(downloadFileRequest);
         } finally {
+            if (guard != null) {
+                guard.release(downloadFileRequest);
+            }
             if (null != downloadFileRequest.getProgressListener()
                     && downloadFileRequest.getProgressListener() instanceof MonitorableProgressListener) {
                 ((MonitorableProgressListener)downloadFileRequest.getProgressListener()).finishOneTask();

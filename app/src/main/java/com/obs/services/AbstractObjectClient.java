@@ -22,6 +22,7 @@ import com.obs.services.exception.ObsException;
 import com.obs.services.internal.ServiceException;
 import com.obs.services.internal.utils.ObjectUtils;
 import com.obs.services.internal.utils.ServiceUtils;
+import com.obs.services.model.objectlock.SetObjectRetentionRequest;
 import com.obs.services.model.AccessControlList;
 import com.obs.services.model.AppendObjectRequest;
 import com.obs.services.model.AppendObjectResult;
@@ -870,5 +871,19 @@ public abstract class AbstractObjectClient extends AbstractBucketAdvanceClient {
                     return AbstractObjectClient.this.getSymlinkImpl(request);
                 }
             });
+    }
+
+    @Override
+    public HeaderResponse setObjectRetention(final SetObjectRetentionRequest request) throws ObsException {
+        ServiceUtils.assertParameterNotNull(request, "SetObjectRetentionRequest is null");
+        ServiceUtils.assertParameterNotNull2(request.getBucketName(), "bucketName is null");
+        ServiceUtils.assertParameterNotNull2(request.getObjectKey(), "objectKey is null");
+        return this.doActionWithResult("setObjectRetention", request.getBucketName(),
+                new ActionCallbackWithResult<HeaderResponse>() {
+                    @Override
+                    public HeaderResponse action() throws ServiceException {
+                        return AbstractObjectClient.this.setObjectRetentionImpl(request);
+                    }
+                });
     }
 }
